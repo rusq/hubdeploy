@@ -192,20 +192,3 @@ func (d *DockerHub) Callback(data CallbackData) error {
 	dlog.Debugf("%s> body: %s", data.ID, string(body))
 	return nil
 }
-
-// tagExist returns true if the tag is in the tags.  If the tags is empty, returns true (matches any tag).
-// if the tag is empty - returns false (matches no tags).
-func tagExist(tags []string, tag string) bool {
-	if len(tags) == 0 {
-		return true
-	}
-	if tag == "" {
-		return false
-	}
-	for _, t := range tags {
-		if t == tag {
-			return true
-		}
-	}
-	return false
-}
