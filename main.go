@@ -34,15 +34,15 @@ func main() {
 	}
 	dlog.Println("starting up...")
 	dlog.SetDebug(*verbose)
-	if err := initlog(*log); err != nil {
-		dlog.Fatal(err)
-	}
 	cfg, err := deploysrv.LoadConfig(*config)
 	if err != nil {
 		dlog.Fatal(err)
 	}
 	srv, err := deploysrv.New(cfg, deploysrv.OptWithCert(*cert, *key), deploysrv.OptWithPrefix(*prefix))
 	if err != nil {
+		dlog.Fatal(err)
+	}
+	if err := initlog(*log); err != nil {
 		dlog.Fatal(err)
 	}
 	addr := *host + ":" + *port

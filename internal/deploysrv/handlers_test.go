@@ -32,8 +32,7 @@ func TestServer_resultsHandler(t *testing.T) {
 	type fields struct {
 		cert       string
 		privkey    string
-		mapping    map[string]Deployment
-		jobs       chan job
+		jobs       chan Job
 		results    chan result
 		url        string
 		resultsDir string
@@ -96,7 +95,6 @@ func TestServer_resultsHandler(t *testing.T) {
 			s := &Server{
 				cert:       tt.fields.cert,
 				privkey:    tt.fields.privkey,
-				mapping:    tt.fields.mapping,
 				jobs:       tt.fields.jobs,
 				results:    tt.fields.results,
 				url:        tt.fields.url,

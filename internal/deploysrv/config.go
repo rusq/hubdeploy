@@ -11,7 +11,7 @@ import (
 )
 
 type Config struct {
-	FQDN        string       `yaml:"url"` // server url for results callback
+	ServerURL   string       `yaml:"server_url"` // server url for results callback
 	Cert        string       `yaml:"cert"`
 	Key         string       `yaml:"key"`
 	ResultsDir  string       `yaml:"results_dir"`
@@ -19,11 +19,11 @@ type Config struct {
 }
 
 type Deployment struct {
-	RepoName string   `yaml:"repo_name"`
-	Tags     []string `yaml:"tags"`
-	Disabled bool     `yaml:"disabled"`
-	Workdir  string   `yaml:"work_dir"`
-	Command  []string `yaml:"command"`
+	Type     string      `yaml:"type"`
+	Disabled bool        `yaml:"disabled"`
+	Workdir  string      `yaml:"work_dir"`
+	Command  []string    `yaml:"command"`
+	Payload  interface{} `yaml:"payload"`
 }
 
 func (c *Config) IsEmpty() bool {
@@ -36,19 +36,9 @@ func (c *Config) IsEmpty() bool {
 	return n == 0
 }
 
-func (c *Config) repomap() map[string]Deployment {
-	m := make(map[string]Deployment)
-	for _, repo := range c.Deployments {
-		m[repo.RepoName] = repo
-	}
-	return m
-}
-
 func (c *Config) validate() error {
 	for i := range c.Deployments {
-		if err := c.Deployments[i].check(); err != nil {
-			return err
-		}
+		c.Deployments[i].initOrDisable()
 	}
 	if c.IsEmpty() {
 		return errors.New("all configurations are invalid or empty config")
@@ -56,25 +46,38 @@ func (c *Config) validate() error {
 	return nil
 }
 
-func (m *Deployment) check() error {
-	if m.RepoName == "" {
-		return errors.New("empty repository name")
-	}
+func (m *Deployment) initOrDisable() {
 	if m.Disabled {
-		return nil
+		return
 	}
 	fi, err := os.Stat(m.Workdir)
 	if err != nil {
 		m.Disabled = true
-		dlog.Printf("[%s] %s", m.RepoName, err)
-		return nil
+		dlog.Printf("workdir error for %q: %s", m.Type, err)
+		return
 	}
 	if !fi.IsDir() {
 		m.Disabled = true
-		dlog.Printf("[%s] %s is not a directory", m.RepoName, m.Workdir)
-		return nil
+		dlog.Printf("[%s] %s is not a directory", m.Type, m.Workdir)
+		return
 	}
-	return nil
+	if m.Payload == nil {
+		m.Disabled = true
+		dlog.Printf("no payload for %q deployment in %q", m.Type, m.Workdir)
+		return
+	}
+
+	dp, ok := deploymentTypes[m.Type]
+	if !ok {
+		m.Disabled = true
+		dlog.Printf("unregistered deployment type %q for workdir %q", m.Type, m.Workdir)
+		return
+	}
+	if err := dp.Register(*m); err != nil {
+		m.Disabled = true
+		dlog.Printf("unable to register deployment type %q in workdir %q: %s", m.Type, m.Workdir, err)
+		return
+	}
 }
 
 func LoadConfig(filename string) (Config, error) {

@@ -1,4 +1,6 @@
 results_dir: ./results
 deployments:
-  - repo_name: "test"
-    work_dir: "."
+  - work_dir: "."
+    type: dockerhub
+    payload:
+      repo_name: "test"

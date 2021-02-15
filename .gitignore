@@ -1,3 +1,4 @@
 *.pem
 hubdeploy
 .idea
+*.log
