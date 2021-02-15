@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	StateSuccess = "success"
-	StateFailure = "failure"
-	StateError   = "error"
+	ssuccess = "success"
+	sfailure = "failure"
+	serror   = "error"
 )
 
 type DockerHub struct {
@@ -156,10 +156,10 @@ func (d *DockerHub) Handler(j chan<- deploysrv.Job) http.HandlerFunc {
 }
 
 func (d *DockerHub) Callback(data deploysrv.CallbackData) error {
-	state := StateSuccess
+	state := ssuccess
 	descr := data.Description
 	if data.Error != nil {
-		state = StateError
+		state = serror
 		descr = data.Error.Error()
 	}
 	cb := callback{

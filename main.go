@@ -5,11 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/rusq/hubdeploy/internal/hookers"
-
-	"github.com/rusq/hubdeploy/internal/deploysrv"
-
 	"github.com/rusq/dlog"
+	"github.com/rusq/hubdeploy/internal/deploysrv"
+	"github.com/rusq/hubdeploy/internal/hookers"
 	"github.com/rusq/osenv"
 )
 
