@@ -1,0 +1,4 @@
+results_dir: ./results
+deployments:
+  - repo_name: "test"
+    work_dir: "."
