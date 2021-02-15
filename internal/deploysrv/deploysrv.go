@@ -125,7 +125,7 @@ func New(c Config, opts ...Option) (*Server, error) {
 }
 
 // Register allows to register custom Hookers.  Must be called after New and before ListenAndServe.
-func (s *Server) Register(h Hooker) error {
+func Register(h Hooker) error {
 	if h == nil {
 		return errors.New("programming error:  hooker is empty")
 	}

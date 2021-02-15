@@ -5,9 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/rusq/hubdeploy/internal/hookers"
+
 	"github.com/rusq/dlog"
 	"github.com/rusq/hubdeploy/internal/deploysrv"
-	"github.com/rusq/hubdeploy/internal/hookers"
 	"github.com/rusq/osenv"
 )
 
@@ -38,6 +39,9 @@ func main() {
 	if err != nil {
 		dlog.Fatal(err)
 	}
+	if err := deploysrv.Register(new(hookers.DockerHub)); err != nil {
+		dlog.Fatal(err)
+	}
 	srv, err := deploysrv.New(cfg, deploysrv.OptWithCert(*cert, *key), deploysrv.OptWithPrefix(*prefix))
 	if err != nil {
 		dlog.Fatal(err)
@@ -45,9 +49,7 @@ func main() {
 	if err := initlog(*log); err != nil {
 		dlog.Fatal(err)
 	}
-	if err := srv.Register(new(hookers.DockerHub)); err != nil {
-		dlog.Fatal(err)
-	}
+
 	addr := *host + ":" + *port
 	dlog.Println("listening on", addr)
 	if err := srv.ListenAndServe(addr); err != nil {

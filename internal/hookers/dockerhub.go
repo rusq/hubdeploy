@@ -21,6 +21,8 @@ const (
 	serror   = "error"
 )
 
+const DTDockerHub = "dockerhub"
+
 type DockerHub struct {
 	mapping map[string]map[string]deploysrv.Deployment // deployment = mapping[repo][tag]
 }
@@ -71,7 +73,7 @@ type docker struct {
 }
 
 func (d *DockerHub) Type() string {
-	return "hockerhub"
+	return DTDockerHub
 }
 
 func (d *DockerHub) Register(dep deploysrv.Deployment) error {
