@@ -17,7 +17,7 @@ var (
 	prefix  = flag.String("prefix", osenv.String("PREFIX", "/"), "api path prefix")
 	cert    = flag.String("cert", "", "certificate path")
 	key     = flag.String("key", "", "certificate key")
-	config  = flag.String("c", "", "config `file`")
+	config  = flag.String("c", osenv.String("CONFIG_YAML", "hubdeploy.yml"), "config `file`")
 	verbose = flag.Bool("v", false, "verbose output")
 	log     = flag.String("l", "", "log `file` or device")
 )
