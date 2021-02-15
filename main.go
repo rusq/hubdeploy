@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/rusq/hubdeploy/internal/hookers"
+
 	"github.com/rusq/hubdeploy/internal/deploysrv"
 
 	"github.com/rusq/dlog"
@@ -43,6 +45,9 @@ func main() {
 		dlog.Fatal(err)
 	}
 	if err := initlog(*log); err != nil {
+		dlog.Fatal(err)
+	}
+	if err := srv.Register(new(hookers.DockerHub)); err != nil {
 		dlog.Fatal(err)
 	}
 	addr := *host + ":" + *port

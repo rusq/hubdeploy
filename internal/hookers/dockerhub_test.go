@@ -1,7 +1,9 @@
-package deploysrv
+package hookers
 
 import (
 	"testing"
+
+	"github.com/rusq/hubdeploy/internal/deploysrv"
 
 	"github.com/goccy/go-yaml"
 )
@@ -15,7 +17,7 @@ payload:
     - tag2
 `
 
-var dockerDepValid Deployment
+var dockerDepValid deploysrv.Deployment
 
 func init() {
 	if err := yaml.Unmarshal([]byte(dockerValid), &dockerDepValid); err != nil {
@@ -25,10 +27,10 @@ func init() {
 
 func TestDockerHub_Register(t *testing.T) {
 	type fields struct {
-		mapping map[string]map[string]Deployment
+		mapping map[string]map[string]deploysrv.Deployment
 	}
 	type args struct {
-		dep Deployment
+		dep deploysrv.Deployment
 	}
 	tests := []struct {
 		name    string

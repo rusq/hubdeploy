@@ -24,8 +24,6 @@ const (
 	results = "results"
 )
 
-type DeploymentType string
-
 var deploymentTypes = map[string]Hooker{}
 
 type Server struct {
@@ -55,6 +53,8 @@ type Hooker interface {
 	// Callback can send (or not, if not implemented by the caller) the callback to source system
 	// with the build results info.
 	Callback(CallbackData) error
+	// Type must return the string that will be used as deployment type.  It will also be a path of a webhook
+	Type() string
 }
 type CallbackData struct {
 	ID          uuid.UUID
@@ -125,11 +125,11 @@ func New(c Config, opts ...Option) (*Server, error) {
 }
 
 // Register allows to register custom Hookers.  Must be called after New and before ListenAndServe.
-func (s *Server) Register(h Hooker, typ string) error {
-	if h == nil || typ == "" {
-		return errors.New("internal error:  hooker or type is empty")
+func (s *Server) Register(h Hooker) error {
+	if h == nil {
+		return errors.New("programming error:  hooker is empty")
 	}
-	deploymentTypes[typ] = h
+	deploymentTypes[h.Type()] = h
 	return nil
 }
 
