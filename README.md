@@ -1,2 +1,2 @@
 # hubdeploy
-Automatic deployment for Dockerhub images in VMS environment
+Automatic deployment for Dockerhub images in VPC or host environments.
