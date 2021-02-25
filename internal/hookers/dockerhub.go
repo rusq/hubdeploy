@@ -122,7 +122,7 @@ func (d *DockerHub) Handler(j chan<- deploysrv.Job) http.HandlerFunc {
 		var wh webhook
 		dec := json.NewDecoder(io.TeeReader(r.Body, &buf))
 		if err := dec.Decode(&wh); err != nil {
-			dlog.Printf("invalid body: %s", buf.String())
+			dlog.Printf("400 invalid body: %s", buf.String())
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
