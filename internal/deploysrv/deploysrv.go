@@ -24,6 +24,10 @@ const (
 	results = "results"
 )
 
+const (
+	goAway = "get lost"
+)
+
 var deploymentTypes = map[string]Hooker{}
 
 type Server struct {
@@ -172,7 +176,7 @@ func (s *Server) routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc(path.Join(s.prefix, "/"), func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(stall * 2) // stall the motherfucker
-		http.Error(w, "go away", http.StatusNotFound)
+		http.Error(w, goAway, http.StatusNotFound)
 	})
 	if s.resultsDir != "" {
 		mux.HandleFunc(path.Join(s.prefix, results)+"/", s.resultsHandler)

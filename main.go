@@ -14,7 +14,7 @@ import (
 
 var (
 	port    = flag.String("p", osenv.String("PORT", "16991"), "http server `port`")
-	host    = flag.String("host", osenv.String("HOST", ""), "`host or ip` to bind to")
+	host    = flag.String("host", osenv.String("HOST", "127.0.0.1"), "`host or ip` to bind to")
 	prefix  = flag.String("prefix", osenv.String("PREFIX", "/"), "api path prefix")
 	cert    = flag.String("cert", "", "certificate path")
 	key     = flag.String("key", "", "certificate key")
