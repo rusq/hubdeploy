@@ -79,6 +79,8 @@ type result struct {
 
 type Option func(*Server)
 
+// OptWithCert allows to specify the certificate and the private key for TLS
+// Listener.
 func OptWithCert(cert, privkey string) Option {
 	return func(s *Server) {
 		if cert == "" || privkey == "" {
@@ -88,18 +90,22 @@ func OptWithCert(cert, privkey string) Option {
 	}
 }
 
+// OptWithPrefix allows to set the url prefix for the muxer.
 func OptWithPrefix(prefix string) Option {
 	return func(s *Server) {
 		s.prefix = prefix
 	}
 }
 
+// OptWithResultDir sets the directory which will contain the results of
+// deployment (combined STDOUT and STDERR outputs).
 func OptWithResultDir(dir string) Option {
 	return func(s *Server) {
 		s.resultsDir = dir
 	}
 }
 
+// New constructs new hubdeploy server instance.
 func New(c Config, opts ...Option) (*Server, error) {
 	if err := c.validate(); err != nil {
 		return nil, err
@@ -137,6 +143,7 @@ func Register(h Hooker) error {
 	return nil
 }
 
+// resultsURL resolves the results URL.
 func (s *Server) resultsURL() string {
 	if s.url == "" || s.resultsDir == "" {
 		return ""
@@ -148,6 +155,7 @@ func (s *Server) resultsURL() string {
 
 }
 
+// initResultDir checks if the directory exists, if not - creates it.
 func (s *Server) initResultDir() error {
 	absPath, err := filepath.Abs(s.resultsDir)
 	if err != nil {
@@ -160,6 +168,8 @@ func (s *Server) initResultDir() error {
 	return nil
 }
 
+// ListenAndServe listens for incoming connections on the specified address and
+// Serves them.
 func (s *Server) ListenAndServe(addr string) error {
 	defer close(s.jobs)
 	mux := s.routes()
@@ -172,6 +182,7 @@ func (s *Server) ListenAndServe(addr string) error {
 	}
 }
 
+// routes creates handlers for the url paths.
 func (s *Server) routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc(path.Join(s.prefix, "/"), func(w http.ResponseWriter, r *http.Request) {
@@ -187,6 +198,7 @@ func (s *Server) routes() http.Handler {
 	return mux
 }
 
+// initWebhookHandlers initialises webhooks handlers.
 func (s *Server) initWebhookHandlers(mux *http.ServeMux) {
 	if len(deploymentTypes) == 0 {
 		dlog.Panic("no deployment handlers, don't know how we got this far")
@@ -196,6 +208,7 @@ func (s *Server) initWebhookHandlers(mux *http.ServeMux) {
 	}
 }
 
+// dispatcher runs the deployments and sends the results to the results chan.
 func (s *Server) dispatcher(results chan<- result, jobs <-chan Job) {
 	for j := range jobs {
 		id, output, err := s.runDeployment(j.Dep)
@@ -209,6 +222,7 @@ func (s *Server) dispatcher(results chan<- result, jobs <-chan Job) {
 	}
 }
 
+// processor processes results.
 func (s *Server) processor(results <-chan result) {
 	for res := range results {
 		msg := "OK"
@@ -236,6 +250,7 @@ func (s *Server) processor(results <-chan result) {
 	}
 }
 
+// ifErrNotNil returns a predefined string depending on the error value.
 func ifErrNotNil(err error, whenNotNil, whenNil string) string {
 	if err != nil {
 		return whenNotNil
@@ -243,6 +258,8 @@ func ifErrNotNil(err error, whenNotNil, whenNil string) string {
 	return whenNil
 }
 
+// runDeployment runs the deployment, returning the result UUID, deployment
+// output and an error.
 func (*Server) runDeployment(d Deployment) (uuid.UUID, []byte, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -267,6 +284,8 @@ func (*Server) runDeployment(d Deployment) (uuid.UUID, []byte, error) {
 	return id, output, nil
 }
 
+// maybeSave maybe saves output to the file with UUID as name and resultExt as
+// an extension.
 func (s *Server) maybeSave(id uuid.UUID, output []byte) {
 	if s.resultsDir == "" {
 		return
@@ -274,9 +293,9 @@ func (s *Server) maybeSave(id uuid.UUID, output []byte) {
 	if err := ioutil.WriteFile(filepath.Join(s.resultsDir, id.String()+resultExt), output, 0600); err != nil {
 		dlog.Println(err)
 	}
-	return
 }
 
+// head splits the slice returning first element and the rest as a slice.
 func head(s ...string) (string, []string) {
 	if len(s) == 0 {
 		return "", nil
