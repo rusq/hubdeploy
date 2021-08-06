@@ -3,9 +3,9 @@ package hookers
 import (
 	"testing"
 
-	"github.com/rusq/hubdeploy/internal/deploysrv"
-
 	"github.com/goccy/go-yaml"
+
+	"github.com/rusq/hubdeploy/internal/deploysrv"
 )
 
 var dockerValid = `---

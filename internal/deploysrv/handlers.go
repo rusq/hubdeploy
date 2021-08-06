@@ -6,19 +6,10 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/rusq/dlog"
 )
-
-func badRequest(w http.ResponseWriter, s ...string) {
-	msg := http.StatusText(http.StatusBadRequest)
-	if len(s) > 0 {
-		msg = strings.Join(s, " ")
-	}
-	http.Error(w, msg, http.StatusBadRequest)
-}
 
 func (s *Server) resultsHandler(w http.ResponseWriter, r *http.Request) {
 	if s.resultsDir == "" {

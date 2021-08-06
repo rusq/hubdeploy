@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/go-playground/assert/v2"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestServer_resultsHandler(t *testing.T) {
