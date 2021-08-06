@@ -49,15 +49,16 @@ type Job struct {
 
 // Hooker is the interface for pluggable webhook handlers.
 type Hooker interface {
-	// Register must register a deployment. If deployment type is different then the one handled
-	// it must return nil.
+	// Register must register a deployment. If deployment type is different then
+	// the one handled it must return nil.
 	Register(Deployment) error
 	// Handle must handle the incoming webhook and post a Job to a Job channel.
 	Handler(chan<- Job) http.HandlerFunc
-	// Callback can send (or not, if not implemented by the caller) the callback to source system
-	// with the build results info.
+	// Callback can send (or not, if not implemented by the caller) the callback
+	// to source system with the build results info.
 	Callback(CallbackData) error
-	// Type must return the string that will be used as deployment type.  It will also be a path of a webhook
+	// Type must return the string that will be used as deployment type.  It
+	// will also be a path of a webhook.
 	Type() string
 }
 type CallbackData struct {
@@ -134,7 +135,8 @@ func New(c Config, opts ...Option) (*Server, error) {
 	return s, nil
 }
 
-// Register allows to register custom Hookers.  Must be called after New and before ListenAndServe.
+// Register allows to register custom Hookers.  Must be called after New and
+// before ListenAndServe.
 func Register(h Hooker) error {
 	if h == nil {
 		return errors.New("programming error:  hooker is empty")
@@ -235,7 +237,7 @@ func (s *Server) processor(results <-chan result) {
 
 		dp, ok := deploymentTypes[res.typ]
 		if !ok {
-			dlog.Printf("*** INTERNAL ERROR***: got result for unregistered type %q", res.typ)
+			dlog.Printf("*** INTERNAL ERROR***: got result for unregistered deployment type %q", res.typ)
 			continue
 		}
 

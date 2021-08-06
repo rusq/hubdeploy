@@ -5,15 +5,15 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/rusq/hubdeploy/internal/hookers"
-
 	"github.com/rusq/dlog"
-	"github.com/rusq/hubdeploy/internal/deploysrv"
 	"github.com/rusq/osenv"
+
+	"github.com/rusq/hubdeploy/internal/deploysrv"
+	"github.com/rusq/hubdeploy/internal/hookers"
 )
 
 var (
-	port    = flag.String("p", osenv.String("PORT", "16991"), "http server `port`")
+	port    = flag.String("p", osenv.String("PORT", "9999"), "http server `port`")
 	host    = flag.String("host", osenv.String("HOST", "127.0.0.1"), "`host or ip` to bind to")
 	prefix  = flag.String("prefix", osenv.String("PREFIX", "/"), "api path prefix")
 	cert    = flag.String("cert", "", "certificate path")
@@ -73,7 +73,6 @@ func initlog(filename string) error {
 
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
-		dlog.Println(err)
 		return err
 	}
 	dlog.SetOutput(f)
