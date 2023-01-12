@@ -1,11 +1,13 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"os"
 	"path/filepath"
 
 	"github.com/rusq/dlog"
+	"github.com/rusq/gotsr"
 	"github.com/rusq/osenv"
 
 	"github.com/rusq/hubdeploy/internal/deploysrv"
@@ -21,6 +23,7 @@ var (
 	config  = flag.String("c", osenv.String("CONFIG_YAML", "hubdeploy.yml"), "config `file`")
 	verbose = flag.Bool("v", false, "verbose output")
 	log     = flag.String("l", "", "log `file` or device")
+	stop    = flag.Bool("stop", false, "stops the process")
 )
 
 func main() {
@@ -33,27 +36,58 @@ func main() {
 		flag.Usage()
 		dlog.Fatal("no config file")
 	}
-	dlog.Println("starting up...")
-	dlog.SetDebug(*verbose)
-	cfg, err := deploysrv.LoadConfig(*config)
+	p, err := gotsr.New()
 	if err != nil {
 		dlog.Fatal(err)
 	}
-	if err := deploysrv.Register(new(hookers.DockerHub)); err != nil {
-		dlog.Fatal(err)
+	if *stop {
+		if err := p.Terminate(); err != nil {
+			if errors.Is(err, gotsr.ErrNotRunning) {
+				dlog.Println(err)
+				return
+			}
+			dlog.Fatal(err)
+		}
+		dlog.Println("stopped")
+		return
 	}
-	srv, err := deploysrv.New(cfg, deploysrv.OptWithCert(*cert, *key), deploysrv.OptWithPrefix(*prefix))
+	if running, err := p.IsRunning(); err != nil {
+		dlog.Fatal(err)
+	} else if running {
+		dlog.Fatal("already running")
+	}
+
+	headless, err := p.TSR()
 	if err != nil {
-		dlog.Fatal(err)
-	}
-	if err := initlog(*log); err != nil {
 		dlog.Fatal(err)
 	}
 
 	addr := *host + ":" + *port
-	dlog.Println("listening on", addr)
-	if err := srv.ListenAndServe(addr); err != nil {
-		dlog.Fatal(err)
+	if !headless {
+		dlog.Println("starting up...")
+		dlog.Println("listening on", addr)
+		return
+	} else {
+		dlog.SetDebug(*verbose)
+		cfg, err := deploysrv.LoadConfig(*config)
+		if err != nil {
+			dlog.Fatal(err)
+		}
+		if err := deploysrv.Register(new(hookers.DockerHub)); err != nil {
+			dlog.Fatal(err)
+		}
+		srv, err := deploysrv.New(cfg, deploysrv.OptWithCert(*cert, *key), deploysrv.OptWithPrefix(*prefix))
+		if err != nil {
+			dlog.Fatal(err)
+		}
+		if err := initlog(*log); err != nil {
+			dlog.Fatal(err)
+		}
+
+		dlog.Println("listening on", addr)
+		if err := srv.ListenAndServe(addr); err != nil {
+			dlog.Fatal(err)
+		}
 	}
 }
 

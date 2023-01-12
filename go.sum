@@ -24,6 +24,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rusq/dlog v1.3.3 h1:Q9fZW1H/YEnlDg3Ph1k/BRSBfi/q5ezI+8Metws9tTI=
 github.com/rusq/dlog v1.3.3/go.mod h1:kjZAEvBu7m3+mnJQKoIeLul1YB3kJq/6lZBdDTZmpzA=
+github.com/rusq/gotsr v0.0.1 h1:upcg7XDyIFMVEvUESRx7ZEcH2hQOlDLXt6+GAug0w4w=
+github.com/rusq/gotsr v0.0.1/go.mod h1:5RMEtnUWwvrih3HBj8THDyGqpW6F6XHjRAZP4/c4PTk=
 github.com/rusq/osenv v0.1.0 h1:lwmr7gMnWwyE2nycGn6fJhgvPRMDN0NjfHugeAsCap4=
 github.com/rusq/osenv v0.1.0/go.mod h1:LMB69ZqtD3bw1+9OlzVLCeRmz+fq23zQY+EU8egN4Zo=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
