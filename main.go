@@ -8,19 +8,19 @@ import (
 
 	"github.com/rusq/dlog"
 	"github.com/rusq/gotsr"
-	"github.com/rusq/osenv"
+	"github.com/rusq/osenv/v2"
 
 	"github.com/rusq/hubdeploy/internal/deploysrv"
 	"github.com/rusq/hubdeploy/internal/hookers"
 )
 
 var (
-	port    = flag.String("p", osenv.String("PORT", "9999"), "http server `port`")
-	host    = flag.String("host", osenv.String("HOST", "127.0.0.1"), "`host or ip` to bind to")
-	prefix  = flag.String("prefix", osenv.String("PREFIX", "/"), "api path prefix")
+	port    = flag.String("p", osenv.Value("PORT", "9999"), "http server `port`")
+	host    = flag.String("host", osenv.Value("HOST", "127.0.0.1"), "`host or ip` to bind to")
+	prefix  = flag.String("prefix", osenv.Value("PREFIX", "/"), "api path prefix")
 	cert    = flag.String("cert", "", "certificate path")
 	key     = flag.String("key", "", "certificate key")
-	config  = flag.String("c", osenv.String("CONFIG_YAML", "hubdeploy.yml"), "config `file`")
+	config  = flag.String("c", osenv.Value("CONFIG_YAML", "hubdeploy.yml"), "config `file`")
 	verbose = flag.Bool("v", false, "verbose output")
 	log     = flag.String("l", "", "log `file` or device")
 	stop    = flag.Bool("stop", false, "stops the process")
