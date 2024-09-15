@@ -3,7 +3,6 @@ package deploysrv
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -292,7 +291,7 @@ func (s *Server) maybeSave(id uuid.UUID, output []byte) {
 	if s.resultsDir == "" {
 		return
 	}
-	if err := ioutil.WriteFile(filepath.Join(s.resultsDir, id.String()+resultExt), output, 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(s.resultsDir, id.String()+resultExt), output, 0600); err != nil {
 		dlog.Println(err)
 	}
 }

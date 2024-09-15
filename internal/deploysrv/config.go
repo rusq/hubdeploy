@@ -11,29 +11,41 @@ import (
 )
 
 type Config struct {
-	ServerURL   string       `yaml:"server_url"` // server url for results callback
-	Cert        string       `yaml:"cert"`
-	Key         string       `yaml:"key"`
-	ResultsDir  string       `yaml:"results_dir"`
+	// ServerURL is the server url for results callback.
+	ServerURL string `yaml:"server_url"`
+	// Cert is the certificate for TLS enabled listener.
+	Cert string `yaml:"cert"`
+	// Key is the key for TLS enabled listener.
+	Key string `yaml:"key"`
+	// ResultsDir is the directory to store results.
+	ResultsDir string `yaml:"results_dir"`
+	// Deployments is the list of deployments.
 	Deployments []Deployment `yaml:"deployments"`
 }
 
 type Deployment struct {
-	Type     string      `yaml:"type"`
-	Disabled bool        `yaml:"disabled"`
-	Workdir  string      `yaml:"work_dir"`
-	Command  []string    `yaml:"command"`
-	Payload  interface{} `yaml:"payload"`
+	// Type is the deployment type from the [hookers] package, (i.e.
+	// dockerhub).
+	Type string `yaml:"type"`
+	// Disabled is the flag to disable the deployment.
+	Disabled bool `yaml:"disabled"`
+	// Workdir is the directory where the deployment is located, hubdeploy
+	// will change to this directory before running the command.
+	Workdir string `yaml:"work_dir"`
+	// Command is the command to run in the workdir.
+	Command []string `yaml:"command"`
+	// Payload is the configuration of the deployment type, i.e. dockerhub
+	// configuration.
+	Payload any `yaml:"payload"`
 }
 
 func (c *Config) IsEmpty() bool {
-	n := 0
 	for _, d := range c.Deployments {
 		if !d.Disabled {
-			n++
+			return false
 		}
 	}
-	return n == 0
+	return true
 }
 
 func (c *Config) validate() error {
