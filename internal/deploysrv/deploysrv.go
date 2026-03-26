@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -134,8 +135,9 @@ func New(c Config, opts ...Option) (*Server, error) {
 	return s, nil
 }
 
-// Register allows to register custom Hookers.  Must be called after New and
-// before ListenAndServe.
+// Register allows to register custom Hookers. It must be called before New,
+// because config validation resolves deployment types from the global
+// registry during server construction.
 func Register(h Hooker) error {
 	if h == nil {
 		return errors.New("programming error:  hooker is empty")
@@ -149,10 +151,12 @@ func (s *Server) resultsURL() string {
 	if s.url == "" || s.resultsDir == "" {
 		return ""
 	}
-	if s.url[len(s.url)-1] != '/' {
-		s.url = s.url + "/"
+	base := strings.TrimRight(s.url, "/")
+	prefix := path.Clean("/" + strings.TrimSpace(s.prefix))
+	if prefix == "." || prefix == "/" {
+		prefix = ""
 	}
-	return s.url + results + "/"
+	return base + prefix + "/" + results + "/"
 
 }
 
@@ -240,14 +244,16 @@ func (s *Server) processor(results <-chan result) {
 			continue
 		}
 
-		dp.Callback(CallbackData{
+		if err := dp.Callback(CallbackData{
 			ID:          res.id,
 			CallbackURL: res.url,
 			Description: ifErrNotNil(res.err, "deployed with error", "deployed OK"),
 			Context:     "Continuous integration by github.com/rusq/hubdeploy",
 			Error:       res.err,
 			ResultsURL:  s.resultsURL() + res.id.String() + resultExt,
-		})
+		}); err != nil {
+			dlog.Printf("%s> callback failed for %q: %v", res.id, res.url, err)
+		}
 	}
 }
 
