@@ -181,6 +181,7 @@ func (d *DockerHub) Callback(data deploysrv.CallbackData) error {
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("invalid status code: %d", resp.StatusCode)
 	}
