@@ -3,11 +3,11 @@ package hookers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
-	"strings"
+	"time"
 
 	"github.com/rusq/hubdeploy/internal/deploysrv"
 
@@ -116,13 +116,24 @@ func (d *DockerHub) tryUnmarshal(I interface{}) (*docker, error) {
 	return &dc, nil
 }
 
+const maxPayloadSz = 1048576 // 1MB for json payload from the upstream.
+const maxCallbackResponseSz = 1048576
+
 func (d *DockerHub) Handler(j chan<- deploysrv.Job) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var buf strings.Builder
 		var wh webhook
-		dec := json.NewDecoder(io.TeeReader(r.Body, &buf))
-		if err := dec.Decode(&wh); err != nil {
-			dlog.Printf("400 invalid body: %s", buf.String())
+		body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxPayloadSz))
+		if err != nil {
+			var tooLarge *http.MaxBytesError
+			if errors.As(err, &tooLarge) {
+				http.Error(w, http.StatusText(http.StatusRequestEntityTooLarge), http.StatusRequestEntityTooLarge)
+				return
+			}
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+		if err := json.Unmarshal(body, &wh); err != nil {
+			dlog.Printf("400 invalid body: %s", body)
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
@@ -157,6 +168,11 @@ func (d *DockerHub) Handler(j chan<- deploysrv.Job) http.HandlerFunc {
 	}
 }
 
+// callback http client with request timeout.
+var cbClient = http.Client{
+	Timeout: time.Minute,
+}
+
 func (d *DockerHub) Callback(data deploysrv.CallbackData) error {
 	state := ssuccess
 	descr := data.Description
@@ -177,7 +193,7 @@ func (d *DockerHub) Callback(data deploysrv.CallbackData) error {
 	// post the results
 	dlog.Printf("%s> posting results to %s", data.ID, data.CallbackURL)
 	dlog.Debugf("%s> data: %s", data.ID, string(b))
-	resp, err := http.Post(data.CallbackURL, "application/json", bytes.NewReader(b))
+	resp, err := cbClient.Post(data.CallbackURL, "application/json", bytes.NewReader(b))
 	if err != nil {
 		return err
 	}
@@ -185,11 +201,14 @@ func (d *DockerHub) Callback(data deploysrv.CallbackData) error {
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("invalid status code: %d", resp.StatusCode)
 	}
-	dlog.Printf("%s> post ok", data.ID)
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxCallbackResponseSz+1))
 	if err != nil {
-		dlog.Printf("%s> error reading body: %s", data.ID, err)
+		return fmt.Errorf("read callback response: %w", err)
 	}
+	if len(body) > maxCallbackResponseSz {
+		return fmt.Errorf("callback response exceeds %d bytes", maxCallbackResponseSz)
+	}
+	dlog.Printf("%s> post ok", data.ID)
 	dlog.Debugf("%s> body: %s", data.ID, string(body))
 	return nil
 }

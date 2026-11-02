@@ -2,9 +2,12 @@ package hookers
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/goccy/go-yaml"
 	"github.com/google/uuid"
@@ -100,5 +103,75 @@ func TestDockerHub_Callback(t *testing.T) {
 				t.Fatalf("callback state = %q, want %q", got.State, ssuccess)
 			}
 		})
+	}
+}
+
+func TestDockerHub_HandlerPayloadLimit(t *testing.T) {
+	const payload = `{"repository":{"repo_name":"test_repo"},"push_data":{"tag":"tag1"}}`
+	tests := []struct {
+		name       string
+		body       string
+		wantStatus int
+		wantJobs   int
+	}{
+		{"valid", payload, http.StatusOK, 1},
+		{"at limit", payload + strings.Repeat(" ", maxPayloadSz-len(payload)), http.StatusOK, 1},
+		{"one byte over limit", payload + strings.Repeat(" ", maxPayloadSz-len(payload)+1), http.StatusRequestEntityTooLarge, 0},
+		{"oversized JSON", `{"repository":{"repo_name":"` + strings.Repeat("x", maxPayloadSz) + `"}}`, http.StatusRequestEntityTooLarge, 0},
+		{"oversized trailing data", payload + strings.Repeat(" ", maxPayloadSz), http.StatusRequestEntityTooLarge, 0},
+		{"extra JSON value", payload + `{}`, http.StatusBadRequest, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &DockerHub{}
+			if err := d.Register(dockerDepValid); err != nil {
+				t.Fatal(err)
+			}
+			jobs := make(chan deploysrv.Job, 1)
+			w := httptest.NewRecorder()
+			d.Handler(jobs)(w, httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tt.body)))
+			if w.Code != tt.wantStatus || len(jobs) != tt.wantJobs {
+				t.Fatalf("status = %d, jobs = %d; want %d, %d", w.Code, len(jobs), tt.wantStatus, tt.wantJobs)
+			}
+		})
+	}
+}
+
+func TestDockerHub_CallbackResponseLimit(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		size    int
+		wantErr bool
+	}{
+		{"at limit", maxCallbackResponseSz, false},
+		{"over limit", maxCallbackResponseSz + 1, true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, _ = io.WriteString(w, strings.Repeat("x", tt.size))
+			}))
+			defer srv.Close()
+			err := (&DockerHub{}).Callback(deploysrv.CallbackData{CallbackURL: srv.URL})
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("Callback() error = %v, want error %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestDockerHub_CallbackTimeoutReadingResponse(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.(http.Flusher).Flush()
+		<-r.Context().Done()
+	}))
+	defer srv.Close()
+	oldClient := cbClient
+	cbClient = http.Client{Timeout: 100 * time.Millisecond}
+	defer func() { cbClient = oldClient }()
+
+	err := (&DockerHub{}).Callback(deploysrv.CallbackData{CallbackURL: srv.URL})
+	if err == nil {
+		t.Fatal("Callback() succeeded despite response timeout")
 	}
 }
